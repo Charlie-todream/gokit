@@ -1,5 +1,6 @@
 # gokit
-一个简单的 go kit 计算程序
+一个简单的 go kit 计算程序  
+文章：https://juejin.cn/post/6844903780933173261
 Go-kit 
 website : https://gokit.io/
 

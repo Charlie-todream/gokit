@@ -10,8 +10,10 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/go-kit/kit/log"
+	"golang.org/x/time/rate"
 )
 
 func main() {
@@ -22,13 +24,18 @@ func main() {
 		logger = log.NewLogfmtLogger(os.Stderr)
 		logger = log.With(logger, "ts", log.DefaultTimestampUTC)
 		logger = log.With(logger, "caller", log.DefaultCaller)
-
 	}
 	var svc services.Service
 	svc = services.ArithmeticService{}
+	// 日志
 	svc = services.LoggingMiddleware(logger)(svc)
 	endpoint := endpoints.MakeArithmeticEndpoint(svc)
-
+	// 限流juju 每秒内容量为3
+	//ratebucket := ratelimit.NewBucket(time.Second*3, 3)
+	//endpoint = services.NewTokenBucketLimitterWithJuju(ratebucket)(endpoint)
+	// 使用内置的 golang.org/x/time/rate 限流中间件
+	ratebucket := rate.NewLimiter(rate.Every(time.Second*4), 3)
+	endpoint = services.NewTokenBucketLimitterWithBuildIn(ratebucket)(endpoint)
 	r := transports.MakeHttpHandler(ctx, endpoint, logger)
 
 	go func() {

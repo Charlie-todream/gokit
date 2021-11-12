@@ -7,3 +7,5 @@ type Service interface {
 
 	Divide(a, b int) (int, error)
 }
+
+type ServiceMiddleware func(Service) Service

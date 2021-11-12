@@ -17,11 +17,6 @@ import (
 func main() {
 	ctx := context.Background()
 	errChan := make(chan error)
-
-	var svc services.Service
-	svc = services.ArithmeticService{}
-	endpoint := endpoints.MakeArithmeticEndpoint(svc)
-
 	var logger log.Logger
 	{
 		logger = log.NewLogfmtLogger(os.Stderr)
@@ -29,6 +24,10 @@ func main() {
 		logger = log.With(logger, "caller", log.DefaultCaller)
 
 	}
+	var svc services.Service
+	svc = services.ArithmeticService{}
+	svc = services.LoggingMiddleware(logger)(svc)
+	endpoint := endpoints.MakeArithmeticEndpoint(svc)
 
 	r := transports.MakeHttpHandler(ctx, endpoint, logger)
 

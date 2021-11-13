@@ -11,7 +11,6 @@ import (
 	"github.com/go-kit/kit/log"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
-	"github.com/go-kit/kit/endpoint"
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/gorilla/mux"
 )
@@ -55,7 +54,7 @@ func encodeArithmeticResponse(ctx context.Context, w http.ResponseWriter, respon
 	return json.NewEncoder(w).Encode(response)
 }
 
-func MakeHttpHandler(ctx context.Context, endpoint endpoint.Endpoint, logger log.Logger) http.Handler {
+func MakeHttpHandler(ctx context.Context, endpoints endpoints.ArithmeticEndpoints, logger log.Logger) http.Handler {
 	r := mux.NewRouter()
 
 	options := []kithttp.ServerOption{
@@ -64,11 +63,19 @@ func MakeHttpHandler(ctx context.Context, endpoint endpoint.Endpoint, logger log
 	}
 
 	r.Methods("POST").Path("/calculate/{type}/{a}/{b}").Handler(kithttp.NewServer(
-		endpoint,
+		endpoints.ArithmeticEndpoint,
 		decodeArithmeticRequest,
 		encodeArithmeticResponse,
 		options...,
 	))
 	r.Path("/metrics").Handler(promhttp.Handler())
+
+	r.Methods("GET").Path("/health").Handler(kithttp.NewServer(
+		endpoints.HealthCheckEndpoint,
+		decodeArithmeticRequest,
+		encodeArithmeticResponse,
+		options...,
+	))
+
 	return r
 }

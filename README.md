@@ -16,3 +16,6 @@ Service
 
 go mod tidy
 go build 
+
+启动 consul 和普罗米修斯
+sudo docker-compose -f docker/docker-compose.yml up

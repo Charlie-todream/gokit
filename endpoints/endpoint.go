@@ -22,6 +22,27 @@ type ArithmeticResponse struct {
 	Error  error `json:"error"`
 }
 
+type ArithmeticEndpoints struct {
+	ArithmeticEndpoint  endpoint.Endpoint
+	HealthCheckEndpoint endpoint.Endpoint
+}
+
+// HealthRequest 健康检查请求结构
+type HealthRequest struct{}
+
+// HealthResponse 健康检查响应结构
+type HealthResponse struct {
+	Status bool `json:"status"`
+}
+
+// MakeHealthCheckEndpoint 创建健康检查Endpoint
+func MakeHealthCheckEndpoint(svc services.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
+		status := svc.HealthCheck()
+		return HealthResponse{status}, nil
+	}
+}
+
 // MakeArithmeticEndpoint make endpoint
 func MakeArithmeticEndpoint(svc services.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {

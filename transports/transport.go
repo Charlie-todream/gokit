@@ -9,6 +9,7 @@ import (
 	"strconv"
 
 	"github.com/go-kit/kit/log"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/go-kit/kit/endpoint"
 	kithttp "github.com/go-kit/kit/transport/http"
@@ -68,6 +69,6 @@ func MakeHttpHandler(ctx context.Context, endpoint endpoint.Endpoint, logger log
 		encodeArithmeticResponse,
 		options...,
 	))
-
+	r.Path("/metrics").Handler(promhttp.Handler())
 	return r
 }

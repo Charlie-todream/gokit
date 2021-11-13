@@ -14,6 +14,9 @@ import (
 
 	"github.com/go-kit/kit/log"
 	"golang.org/x/time/rate"
+
+	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
+	stdprometheus "github.com/prometheus/client_golang/prometheus"
 )
 
 func main() {
@@ -25,8 +28,26 @@ func main() {
 		logger = log.With(logger, "ts", log.DefaultTimestampUTC)
 		logger = log.With(logger, "caller", log.DefaultCaller)
 	}
+
+	fieldKeys := []string{"method"}
+	requestCount := kitprometheus.NewCounterFrom(stdprometheus.CounterOpts{
+		Namespace: "raysonxin",
+		Subsystem: "arithmetic_service",
+		Name:      "request_count",
+		Help:      "Number of requests received.",
+	}, fieldKeys)
+
+	requestLatency := kitprometheus.NewSummaryFrom(stdprometheus.SummaryOpts{
+		Namespace: "raysonxin",
+		Subsystem: "arithemetic_service",
+		Name:      "request_latency",
+		Help:      "Total duration of requests in microseconds.",
+	}, fieldKeys)
+
 	var svc services.Service
 	svc = services.ArithmeticService{}
+	svc = services.Metrics(requestCount, requestLatency)(svc)
+
 	// 日志
 	svc = services.LoggingMiddleware(logger)(svc)
 	endpoint := endpoints.MakeArithmeticEndpoint(svc)

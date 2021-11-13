@@ -24,11 +24,12 @@ import (
 func main() {
 
 	var (
-		consulHost  = flag.String("consul.host", "", "consul ip address")
-		consulPort  = flag.String("consul.port", "", "consul port")
-		serviceHost = flag.String("service.host", "", "service ip address")
-		servicePort = flag.String("service.port", "", "service port")
+		consulHost  = flag.String("consul_host", "localhost", "consul ip address")
+		consulPort  = flag.String("consul_port", "8500", "consul port")
+		serviceHost = flag.String("service_host", "localhost", "service ip address")
+		servicePort = flag.String("service_port", "9000", "service port")
 	)
+	flag.String("hello", "asan", "姓名")
 	flag.Parse()
 	ctx := context.Background()
 	errChan := make(chan error)
@@ -101,6 +102,10 @@ func main() {
 		errChan <- fmt.Errorf("%s", <-c)
 	}()
 
+	//服务退出，取消注册
+	error := <-errChan
+	registar.Deregister()
+	fmt.Println(error)
 	fmt.Println(<-errChan)
 
 }

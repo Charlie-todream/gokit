@@ -19,3 +19,7 @@ go build
 
 启动 consul 和普罗米修斯
 sudo docker-compose -f docker/docker-compose.yml up
+
+go build ./learn
+
+./learn -consul_host=localhost -consul_port=8500 -service_host=192.168.192.145 -service_port=9000

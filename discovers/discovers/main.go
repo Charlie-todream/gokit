@@ -1,3 +1,18 @@
+package main
+
+import (
+	"context"
+	"flag"
+	"fmt"
+	"github.com/go-kit/kit/sd/consul"
+	"github.com/go-kit/log"
+	"github.com/hashicorp/consul/api"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+)
+
 func main() {
 
 	// 创建环境变量

@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"github.com/openzipkin/zipkin-go"
 	"learn/endpoints"
 	"learn/registers"
 	"learn/services"
@@ -15,10 +16,11 @@ import (
 	"time"
 
 	"github.com/go-kit/kit/log"
-	"golang.org/x/time/rate"
-
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
+	kitzipkin "github.com/go-kit/kit/tracing/zipkin"
+	zipkinhttp "github.com/openzipkin/zipkin-go/reporter/http"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
+	"golang.org/x/time/rate"
 )
 
 func main() {
@@ -28,6 +30,7 @@ func main() {
 		consulPort  = flag.String("consul_port", "8500", "consul port")
 		serviceHost = flag.String("service_host", "localhost", "service ip address")
 		servicePort = flag.String("service_port", "9000", "service port")
+		zipkinURL   = flag.String("zipkin.url", "http://192.168.192.146:9411/api/v2/spans", "Zipkin server url")
 	)
 	flag.String("hello", "asan", "姓名")
 	flag.Parse()
@@ -54,6 +57,28 @@ func main() {
 		Name:      "request_latency",
 		Help:      "Total duration of requests in microseconds.",
 	}, fieldKeys)
+	var zipkinTracer *zipkin.Tracer
+	{
+		var (
+			err           error
+			hostPort      = *serviceHost + ":" + *servicePort
+			serviceName   = "arithmetic-service"
+			useNoopTracer = (*zipkinURL == "")
+			reporter      = zipkinhttp.NewReporter(*zipkinURL)
+		)
+		defer reporter.Close()
+		zEP, _ := zipkin.NewEndpoint(serviceName, hostPort)
+		zipkinTracer, err = zipkin.NewTracer(
+			reporter, zipkin.WithLocalEndpoint(zEP), zipkin.WithNoopTracer(useNoopTracer),
+		)
+		if err != nil {
+			logger.Log("err", err)
+			os.Exit(1)
+		}
+		if !useNoopTracer {
+			logger.Log("tracer", "Zipkin", "type", "Native", "URL", *zipkinURL)
+		}
+	}
 
 	var svc services.Service
 	svc = services.ArithmeticService{}
@@ -71,6 +96,8 @@ func main() {
 	// 健康检查
 	//创建健康检查的Endpoint，未增加限流
 	healthEndpoint := endpoints.MakeHealthCheckEndpoint(svc)
+	//添加追踪，设置span的名称为health-endpoint
+	healthEndpoint = kitzipkin.TraceEndpoint(zipkinTracer, "health-endpoint")(healthEndpoint)
 
 	//把算术运算Endpoint和健康检查Endpoint封装至ArithmeticEndpoints
 	endpts := endpoints.ArithmeticEndpoints{

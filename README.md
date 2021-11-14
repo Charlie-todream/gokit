@@ -23,3 +23,5 @@ sudo docker-compose -f docker/docker-compose.yml up
 go build ./learn
 
 ./learn -consul_host=localhost -consul_port=8500 -service_host=192.168.192.145 -service_port=9000
+
+./gateway -consul.host localhost -consul.port 8500

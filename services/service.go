@@ -9,7 +9,7 @@ type Service interface {
 	Add(a, b int) int
 	Subtract(a, b int) int
 	Multiply(a, b int) int
-
+	Login(name, pwd string) (string, error)
 	Divide(a, b int) (int, error)
 	HealthCheck() bool
 }
@@ -66,4 +66,13 @@ func (mw metricMiddleware) HealthCheck() (result bool) {
 
 	result = mw.Service.HealthCheck()
 	return
+}
+
+func (s ArithmeticService) Login(name, pwd string) (string, error) {
+	if name == "name" && pwd == "pwd" {
+		token, err := Sign(name, pwd)
+		return token, err
+	}
+
+	return "", errors.New("Your name or password dismatch")
 }

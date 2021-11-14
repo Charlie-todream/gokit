@@ -77,5 +77,25 @@ func MakeHttpHandler(ctx context.Context, endpoints endpoints.ArithmeticEndpoint
 		options...,
 	))
 
+	r.Methods("POST").Path("/login").Handler(kithttp.NewServer(
+		endpoints.AuthEndpoint,
+		decodeLoginRequest,
+		encodeLoginResponse,
+		options...,
+	))
+
 	return r
+}
+
+func decodeLoginRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	var loginRequest endpoints.AuthRequest
+	if err := json.NewDecoder(r.Body).Decode(&loginRequest); err != nil {
+		return nil, err
+	}
+	return loginRequest, nil
+}
+
+func encodeLoginResponse(ctx context.Context, w http.ResponseWriter, response interface{}) error {
+	w.Header().Set("Content-Type", "application/json;charset=utf-8")
+	return json.NewEncoder(w).Encode(response)
 }

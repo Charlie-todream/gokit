@@ -100,9 +100,15 @@ func main() {
 	healthEndpoint = kitzipkin.TraceEndpoint(zipkinTracer, "health-endpoint")(healthEndpoint)
 
 	//把算术运算Endpoint和健康检查Endpoint封装至ArithmeticEndpoints
+	//身份认证Endpoint
+	authEndpoint := endpoints.MakeAuthEndpoint(svc)
+	authEndpoint = services.NewTokenBucketLimitterWithBuildIn(ratebucket)(authEndpoint)
+	authEndpoint = kitzipkin.TraceEndpoint(zipkinTracer, "login-endpoint")(authEndpoint)
+
 	endpts := endpoints.ArithmeticEndpoints{
 		ArithmeticEndpoint:  endpoint,
 		HealthCheckEndpoint: healthEndpoint,
+		AuthEndpoint:        authEndpoint,
 	}
 
 	//创建http.Handler
